@@ -24,13 +24,14 @@ async function run() {
   try {
     // Connect the client to the server
     await client.connect();
-    const db = client.db("marriottResort"); // Access the correct database
+    const db = client.db("marriottResort");
     
     // Get the collections
     const hotelData = db.collection("hotelData");
     const usersDataCollection = db.collection("users");
     const AllHotelListCollection = db.collection("hotelList");
     const earningListCollection = db.collection("earningList");
+    const PropertyDataCollection = db.collection("propertyData");
 
     // Route to fetch hotel data
     app.get('/hotel-data', async (req, res) => {
@@ -99,6 +100,30 @@ async function run() {
         res.status(500).json({ error: 'Internal Server Error' });
       }
     });
+
+
+    // Add this route to handle receiving add-property data
+app.post('/add-property', async (req, res) => {
+  try {
+    const propertyData = req.body; // Extract property data from request body
+    if (!propertyData || !propertyData.name || !propertyData.description || !propertyData.location || !propertyData.image) {
+      return res.status(400).json({ error: 'Invalid property data' });
+    }
+
+    // Insert property data into the hotel list collection
+    const result = await PropertyDataCollection.insertOne(propertyData);
+
+    // Respond with the result
+    res.status(201).json({
+      message: 'Property added successfully',
+      insertedId: result.insertedId,
+    });
+  } catch (error) {
+    console.error('Error adding property:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+});
+
 
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
