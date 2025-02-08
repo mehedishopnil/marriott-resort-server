@@ -122,6 +122,17 @@ async function run() {
       }
     });
 
+     // Route to fetch earning list data
+     app.get('/add-property', async (req, res) => {
+      try {
+        const result = await PropertyDataCollection.find().toArray();
+        res.json(result);
+      } catch (error) {
+        console.error('Error fetching earning list data:', error);
+        res.status(500).json({ error: 'Error fetching property list data' });
+      }
+    });
+
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
