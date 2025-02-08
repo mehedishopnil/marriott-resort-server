@@ -103,24 +103,25 @@ async function run() {
     // Route to handle adding property data
     app.post('/add-property', async (req, res) => {
       try {
-        const propertyData = req.body; // Extract property data from request body
-        if (!propertyData || !propertyData.name || !propertyData.description || !propertyData.location || !propertyData.image) {
-          return res.status(400).json({ error: 'Invalid property data' });
+        console.log("Received property data:", req.body); // Debugging line
+    
+        const { propertyType, location, details } = req.body;
+    
+        if (!propertyType || !location || !details || !details.name || !details.country || !details.address || !details.city || !details.state || !details.zipCode) {
+          return res.status(400).json({ error: 'Invalid property data. Ensure all required fields are provided.' });
         }
-
-        // Insert property data into the property collection
-        const result = await PropertyDataCollection.insertOne(propertyData);
-
-        // Respond with the result
-        res.status(201).json({
-          message: 'Property added successfully',
-          insertedId: result.insertedId,
-        });
+    
+        // Insert property data into MongoDB
+        const result = await PropertyDataCollection.insertOne(req.body);
+    
+        res.status(201).json({ message: 'Property added successfully', insertedId: result.insertedId });
+    
       } catch (error) {
         console.error('Error adding property:', error);
         res.status(500).json({ error: 'Error adding property' });
       }
     });
+    
 
      // Route to fetch earning list data
      app.get('/add-property', async (req, res) => {
