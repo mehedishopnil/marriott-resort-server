@@ -31,6 +31,7 @@ async function run() {
     const AllHotelListCollection = db.collection("hotelList");
     const earningListCollection = db.collection("earningList");
     const PropertyDataCollection = db.collection("propertyData");
+    const userInfoDataCollection = db.collection("userInfo");
 
     // Route to fetch hotel data
     app.get('/hotel-data', async (req, res) => {
@@ -43,14 +44,50 @@ async function run() {
       }
     });
 
-    // Route to fetch users data
-    app.get('/users', async (req, res) => {
+    
+    // Route to fetch userInfo data
+    app.get('/userInfo', async (req, res) => {
       try {
-        const result = await usersCollection.find().toArray();
+        const result = await userInfoDataCollection.find().toArray();
         res.json(result);
       } catch (error) {
-        console.error('Error fetching users data:', error);
-        res.status(500).json({ error: 'Error fetching users data' });
+        console.error('Error fetching userInfo data:', error);
+        res.status(500).json({ error: 'Error fetching userInfo data' });
+      }
+    });
+
+     // Route to handle user registration and Google login
+     app.post('/users', async (req, res) => {
+      try {
+        const { uid, name, email, imageURL } = req.body;
+
+        // Validate required fields
+        if (!uid || !name || !email) {
+          return res.status(400).json({ error: 'Missing required fields (uid, name, email)' });
+        }
+
+        // Check if user already exists
+        const existingUser = await usersCollection.findOne({ email });
+        if (existingUser) {
+          return res.status(200).json({ message: 'User already exists', user: existingUser });
+        }
+
+        // Create new user document
+        const newUser = {
+          uid,
+          name,
+          email,
+          imageURL: imageURL || null, // Default to null if no image URL is provided
+          createdAt: new Date(), // Add timestamp
+          isAdmin: false, // Default role
+        };
+
+        // Insert new user into the database
+        const result = await usersCollection.insertOne(newUser);
+        res.status(201).json({ message: 'User created successfully', user: newUser });
+      } catch (error) {
+        console.error('Error creating user:', error);
+        res.status(500).json({ error: 'Error creating user' });
       }
     });
 
@@ -58,7 +95,7 @@ async function run() {
     app.get('/users/:email', async (req, res) => {
       try {
         const email = req.params.email;
-        const query = { email: email };
+        const query = { email };
         const user = await usersCollection.findOne(query);
 
         if (!user) {
@@ -69,35 +106,6 @@ async function run() {
       } catch (error) {
         console.error('Error fetching user:', error);
         res.status(500).json({ error: 'Error fetching user' });
-      }
-    });
-
-    // Route to handle user registration
-    app.post('/users', async (req, res) => {
-      try {
-        const userData = req.body; // Accept all data from the frontend
-
-        // Basic validation for required fields
-        if (!userData.name || !userData.email || !userData.password || !userData.membership) {
-          return res.status(400).json({ error: 'Required fields (name, email, password, membership) are missing' });
-        }
-
-        // Check if user already exists
-        const existingUser = await usersCollection.findOne({ email: userData.email });
-        if (existingUser) {
-          return res.status(400).json({ error: 'User already exists' });
-        }
-
-        // Add default fields if not provided
-        userData.isAdmin = userData.isAdmin || false; // Default role
-        userData.createdAt = new Date(); // Add timestamp
-
-        // Insert new user
-        const result = await usersCollection.insertOne(userData);
-        res.status(201).json(result);
-      } catch (error) {
-        console.error('Error registering user:', error);
-        res.status(500).json({ error: 'Error registering user' });
       }
     });
 
